@@ -243,14 +243,14 @@ $(document).ready(function() {
     }
 
     // Prevent hiding the element editor
-    $('#layout-preview').on('click', function(e) {
-        if ($(e.target).is('#layout-preview')) {
-            selectedElement = null;
-            $('.selected').removeClass('selected');
-            $('#element-editor').hide();
-            debug("Element editor hidden");
-        }
-    });
+   $('#layout-preview').on('click', function(e) {
+    if ($(e.target).is('#layout-preview')) {
+        selectedElement = null;
+        $('.selected').removeClass('selected');
+        $('#element-editor').hide();
+        debug("Element editor hidden");
+    }
+});
 
     debug("Setup complete");
 });
