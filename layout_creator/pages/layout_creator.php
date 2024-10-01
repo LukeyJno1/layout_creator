@@ -24,7 +24,7 @@
             <button id="load-layout">Load Layout</button>
         </div>
         <div id="layout-preview"></div>
-        <div id="element-editor">
+        <div id="element-editor" style="display: none;">
             <h3>Edit Element: <span id="element-name"></span></h3>
             <label for="element-custom-name">Custom Name:</label>
             <input type="text" id="element-custom-name" placeholder="Custom Name">
