@@ -4,10 +4,18 @@ $(document).ready(function() {
     let undoStack = [];
 
     function debug(message) {
+        console.log(message);
         $('#debug-output').append(`<p>${message}</p>`);
     }
 
     debug("Script loaded");
+
+    // Check if element editor exists
+if ($('#element-editor').length) {
+    debug("Element editor found in DOM");
+} else {
+    debug("ERROR: Element editor not found in DOM");
+}
 
     function createContainer(type, parent) {
         layoutId++;
@@ -42,10 +50,9 @@ $(document).ready(function() {
         $('.selected').removeClass('selected');
         $element.addClass('selected');
         selectedElement = $element;
-        
+
         $('#element-name').text($element.attr('data-name'));
-        $('#element-custom-name').val($element.attr('data-name'));
-        $('#width').val($element.css('width'));
+        $('#element-custom-name').val($element.attr('data-name'));        $('#width').val($element.css('width'));
         $('#height').val($element.css('height'));
         $('#padding').val($element.css('padding'));
         $('#margin').val($element.css('margin'));
@@ -60,13 +67,42 @@ $(document).ready(function() {
         $('#border-radius').val($element.css('border-radius'));
 
         $('#element-editor').show();
-        debug("Element editor shown");
+        debug("Element editor should be visible now");
+        
+        // Check if element editor is actually visible
+        if ($('#element-editor').is(':visible')) {
+            debug("Element editor is confirmed visible");
+        } else {
+            debug("ERROR: Element editor is still hidden");
+        }
+    }
+
+    function clearElementEditor() {
+        $('#element-name').text('No element selected');
+        $('#element-custom-name').val('');
+        $('#width').val('');
+        $('#height').val('');
+        $('#padding').val('');
+        $('#margin').val('');
+        $('#border-width').val('');
+        $('#border-style').val('');
+        $('#border-color').val('');
+        $('#bg-color').val('');
+        $('#bg-image').val('');
+        $('#bg-repeat').val('');
+        $('#horizontal-align').val('');
+        $('#vertical-align').val('');
+        $('#border-radius').val('');
+        debug("Element editor cleared");
     }
 
     function rgb2hex(rgb) {
+        if (!rgb) return ''; // Return empty string if rgb is null or undefined
         if (rgb.startsWith('rgb')) {
             rgb = rgb.match(/^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/);
-            return "#" + hex(rgb[1]) + hex(rgb[2]) + hex(rgb[3]);
+            if (rgb && rgb.length === 4) {
+                return "#" + hex(rgb[1]) + hex(rgb[2]) + hex(rgb[3]);
+            }
         }
         return rgb;
     }
@@ -80,6 +116,28 @@ $(document).ready(function() {
         if (undoStack.length > 20) {
             undoStack.shift();
         }
+    }
+
+    function updateCSSOutput() {
+        let css = '';
+        $('#layout-preview').find('.container, .row, .column').each(function() {
+            const id = $(this).attr('id');
+            const styles = $(this).attr('style');
+            if (styles) {
+                css += `#${id} { ${styles} }\n`;
+            }
+        });
+        $('#css-output').text(css);
+        debug("CSS output updated");
+    }
+
+    function reattachEvents() {
+        $('#layout-preview').find('.container, .row, .column').each(function() {
+            $(this).on('click', function(e) {
+                e.stopPropagation();
+                selectElement($(this));
+            });
+        });
     }
 
     $('#add-container').on('click', function() {
@@ -124,7 +182,7 @@ $(document).ready(function() {
         if (selectedElement) {
             selectedElement.remove();
             selectedElement = null;
-            $('#element-editor').hide();
+            clearElementEditor();
             addToUndoStack();
             debug("Element deleted");
         } else {
@@ -136,7 +194,7 @@ $(document).ready(function() {
         if (e.key === 'Delete' && selectedElement) {
             selectedElement.remove();
             selectedElement = null;
-            $('#element-editor').hide();
+            clearElementEditor();
             addToUndoStack();
             debug("Element deleted with Delete key");
         }
@@ -177,19 +235,6 @@ $(document).ready(function() {
             updateElementName(selectedElement, $(this).val());
         }
     });
-
-    function updateCSSOutput() {
-        let css = '';
-        $('#layout-preview').find('.container, .row, .column').each(function() {
-            const id = $(this).attr('id');
-            const styles = $(this).attr('style');
-            if (styles) {
-                css += `#${id} { ${styles} }\n`;
-            }
-        });
-        $('#css-output').text(css);
-        debug("CSS output updated");
-    }
 
     $('#save-layout').on('click', function() {
         debug("Save layout clicked");
@@ -233,24 +278,51 @@ $(document).ready(function() {
         });
     });
 
-    function reattachEvents() {
-        $('#layout-preview').find('.container, .row, .column').each(function() {
-            $(this).on('click', function(e) {
-                e.stopPropagation();
-                selectElement($(this));
-            });
-        });
+    $('#layout-preview').on('click', function(e) {
+        if ($(e.target).is('#layout-preview')) {
+            selectedElement = null;
+            $('.selected').removeClass('selected');
+            clearElementEditor();
+            debug("No element selected");
+        }
+    });
+
+    // Initialize
+    $('#element-editor').show();
+    debug("Attempting to show element editor");
+    
+    // Check if element editor is visible
+    if ($('#element-editor').is(':visible')) {
+        debug("Element editor is visible on page load");
+    } else {
+        debug("ERROR: Element editor is hidden on page load");
     }
 
-    // Prevent hiding the element editor
-   $('#layout-preview').on('click', function(e) {
-    if ($(e.target).is('#layout-preview')) {
-        selectedElement = null;
-        $('.selected').removeClass('selected');
-        $('#element-editor').hide();
-        debug("Element editor hidden");
-    }
+    // Check element editor's CSS properties
+    let editorCSS = $('#element-editor').css(['display', 'visibility', 'opacity']);
+    debug(`Element editor CSS - Display: ${editorCSS.display}, Visibility: ${editorCSS.visibility}, Opacity: ${editorCSS.opacity}`);
+
+    clearElementEditor();
+    debug("Setup complete");
+    // Force element editor to be visible
+$('#element-editor').css({
+    'display': 'block',
+    'visibility': 'visible',
+    'opacity': '1'
 });
 
-    debug("Setup complete");
+debug("Forced element editor to be visible");
+
+// Check element editor's position and size
+let editorRect = $('#element-editor')[0].getBoundingClientRect();
+debug(`Element editor position - Top: ${editorRect.top}, Left: ${editorRect.left}, Width: ${editorRect.width}, Height: ${editorRect.height}`);
+
+// Check if element editor is in the viewport
+let isInViewport = (
+    editorRect.top >= 0 &&
+    editorRect.left >= 0 &&
+    editorRect.bottom <= (window.innerHeight || document.documentElement.clientHeight) &&
+    editorRect.right <= (window.innerWidth || document.documentElement.clientWidth)
+);
+debug(`Element editor is ${isInViewport ? 'in' : 'not in'} the viewport`);
 });
